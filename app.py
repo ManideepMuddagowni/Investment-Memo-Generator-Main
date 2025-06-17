@@ -145,20 +145,22 @@ with right_col:
 
                 memo = generate_investment_memo(info, hist, ticker)
                 st.success(f"✅ Memo generated for {info.get('shortName', ticker)}")
-                technical_section = f"""
-                <div style="background-color:#f1f8ff; padding:15px; border-left:5px solid #1f77b4; border-radius:8px; margin-bottom:20px;">
-                    <h4 style="color:#1f77b4;">📈 Technical Analysis (as of June 17, 2025)</h4>
-                    <p><strong>Open Price:</strong> 326.02</p>
-                    <p><strong>Close Price:</strong> 321.80</p>
-                    <p><strong>MA20 (20-day Moving Average):</strong> 331.94</p>
-                    <p><strong>MA50 (50-day Moving Average):</strong> 299.97</p>
-                    <p><strong>RSI (Relative Strength Index):</strong> <span style="color:{'green' if 30 < 37.88 < 70 else 'red'};'>37.88</span></p>
-                    <p><strong>MACD:</strong> 3.1035</p>
-                    <p><strong>Signal Line:</strong> 5.9905</p>
-                </div>
-                """
 
-                st.markdown(technical_section, unsafe_allow_html=True)
+                # ✅ Show technical section only for "Live Stock Data Memo"
+                if memo_type.startswith("Live"):
+                    technical_section = f"""
+                    <div style="background-color:#f1f8ff; padding:15px; border-left:5px solid #1f77b4; border-radius:8px; margin-bottom:20px;">
+                        <h4 style="color:#1f77b4;">📈 Technical Analysis (as of June 17, 2025)</h4>
+                        <p><strong>Open Price:</strong> 326.02</p>
+                        <p><strong>Close Price:</strong> 321.80</p>
+                        <p><strong>MA20 (20-day Moving Average):</strong> 331.94</p>
+                        <p><strong>MA50 (50-day Moving Average):</strong> 299.97</p>
+                        <p><strong>RSI (Relative Strength Index):</strong> <span style="color:{'green' if 30 < 37.88 < 70 else 'red'};'>37.88</span></p>
+                        <p><strong>MACD:</strong> 3.1035</p>
+                        <p><strong>Signal Line:</strong> 5.9905</p>
+                    </div>
+                    """
+                    st.markdown(technical_section, unsafe_allow_html=True)
 
                 with st.expander("📝 Investment Memo Preview", expanded=True):
                     render_structured_memo(memo)
