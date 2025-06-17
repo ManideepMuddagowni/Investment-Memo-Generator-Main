@@ -30,15 +30,50 @@ left_col, right_col = st.columns([1.2, 2])
 # ---------- LEFT: INPUTS ----------
 with left_col:
     ticker_dict = build_ticker_dict()
-    options = list(ticker_dict.keys())
-    selected_company = st.selectbox("🔎 Select Company", options, index=0)
+    options = ["None"] + list(ticker_dict.keys())  # Add 'None' option to allow deselection
 
-    user_input = st.text_input("Or enter ticker/name:", value="")
+    # Session state initialization
+    if "input_used" not in st.session_state:
+        st.session_state.input_used = False
+    if "dropdown_used" not in st.session_state:
+        st.session_state.dropdown_used = False
+
+    # --- Handlers ---
+    def on_input_change():
+        if st.session_state.user_input.strip():
+            st.session_state.input_used = True
+            st.session_state.dropdown_used = False
+        else:
+            st.session_state.input_used = False
+
+    def on_dropdown_change():
+        selected = st.session_state.selected_company
+        if selected != "None":
+            st.session_state.dropdown_used = True
+            st.session_state.input_used = False
+        else:
+            st.session_state.dropdown_used = False
+
+    # --- Input + Dropdown ---
+    user_input = st.text_input(
+        "Or enter ticker/name:",
+        key="user_input",
+        disabled=st.session_state.dropdown_used,
+        on_change=on_input_change
+    )
+
+    selected_company = st.selectbox(
+        "🔎 Select Company",
+        options,
+        index=0,
+        key="selected_company",
+        disabled=st.session_state.input_used,
+        on_change=on_dropdown_change
+    )
+
+    # --- Ticker logic ---
     ticker = None
-
-    # Determine ticker based on input or selection
-    if user_input.strip():
-        # Try fuzzy match on input
+    if st.session_state.input_used:
         fuzzy_ticker = get_closest_ticker(user_input.strip(), ticker_dict)
         if fuzzy_ticker:
             ticker = fuzzy_ticker
@@ -46,8 +81,11 @@ with left_col:
         else:
             ticker = user_input.strip().upper()
             st.warning(f"Using input as ticker: {ticker}")
-    else:
-        ticker = ticker_dict[selected_company]
+    elif st.session_state.dropdown_used:
+        ticker = ticker_dict[st.session_state.selected_company]
+
+
+
 
     memo_type = st.radio(
         "🧠 Select Memo Type",
@@ -64,6 +102,7 @@ with left_col:
         )
 
     generate_btn = st.button("🚀 Generate Investment Memo")
+
 
 
 # ---------- RIGHT: OUTPUT ----------
