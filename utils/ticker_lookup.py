@@ -1,7 +1,7 @@
 from fuzzywuzzy import process
 import yfinance as yf
 import pandas as pd
-import pandas as ta  # Make sure you have this installed: pip install pandas_ta
+ # Ensure installed with: pip install pandas_ta
 
 def build_ticker_dict():
     return {
@@ -20,14 +20,29 @@ def get_closest_ticker(company_name, ticker_dict):
 
 def get_stock_data(ticker, period="6mo"):
     stock = yf.Ticker(ticker)
-    hist = stock.history(period=period)
-    # For 1d period fallback: get last available day if empty
-    if hist.empty and period == "1d":
-        hist = stock.history(period="5d").tail(1)
-    info = stock.info
-    if hist.empty or 'shortName' not in info:
-        raise ValueError(f"No data found for ticker '{ticker}'")
-    return hist, info
+    try:
+        hist = stock.history(period=period)
+        # Fallback for 1d period: try 5d if empty
+        if hist.empty and period == "1d":
+            hist = stock.history(period="5d").tail(1)
+        info = stock.info
+        if hist.empty or 'shortName' not in info:
+            raise ValueError(f"No data found for ticker '{ticker}'")
+        return hist, info
+    except Exception as e:
+        # Try removing '$' if present and retry once
+        if ticker.startswith('$'):
+            ticker = ticker[1:]
+            stock = yf.Ticker(ticker)
+            hist = stock.history(period=period)
+            if hist.empty and period == "1d":
+                hist = stock.history(period="5d").tail(1)
+            info = stock.info
+            if hist.empty or 'shortName' not in info:
+                raise ValueError(f"No data found for ticker '{ticker}' after retry: {e}")
+            return hist, info
+        else:
+            raise e
 
 def get_live_price(ticker):
     stock = yf.Ticker(ticker)
@@ -37,4 +52,3 @@ def get_live_price(ticker):
         info = stock.info
         price = info.get('regularMarketPrice', None)
     return price
-
